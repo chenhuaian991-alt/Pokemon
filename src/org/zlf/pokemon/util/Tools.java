@@ -3,7 +3,6 @@ import org.zlf.pokemon.item.HP;
 import org.zlf.pokemon.item.Item;
 import org.zlf.pokemon.item.equipment.*;
 import org.zlf.pokemon.item.pokemon.*;
-import javax.tools.Tool;
 import java.util.Random;
 import java.util.Scanner;
 
@@ -27,6 +26,10 @@ public class Tools {
      */
     public static char getInputChar(){
         while (true){
+            if (!SCANNER.hasNext()) {
+                System.out.println("输入流已关闭，程序退出");
+                System.exit(0);   // 或抛出带提示的运行时异常
+            }
             String input=SCANNER.next().trim();
             if(input.length()!=1){
                 System.out.println("输入错误，请重新输入");
@@ -44,6 +47,10 @@ public class Tools {
      */
     public static int getInputNumber(int min,int max){
         while(true){
+            if (!SCANNER.hasNext()) {
+                System.out.println("输入流已关闭，程序退出");
+                System.exit(0);   // 或抛出带提示的运行时异常
+            }
             if(SCANNER.hasNextInt()){
                 int num= SCANNER.nextInt();
                 if(num>=min&&num<=max){
@@ -79,6 +86,7 @@ public class Tools {
      */
     public static int getRandomNumber(int min,int max,int levelNumber){
         int diff=(max-min)*levelNumber;
+        if (diff <= 0) return min * levelNumber;
         return RANDOM.nextInt(diff)+min*levelNumber;
     }
 

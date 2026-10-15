@@ -129,6 +129,7 @@ public class LevelMap {
                     return null;
                 }
                 targetRow+=1;
+                break;
             case 'D':
                 if(targetCol== items[currentRow].length-1){
                     return null;
@@ -136,7 +137,7 @@ public class LevelMap {
                 targetCol+=1;
                 break;
         }
-        return items[currentRow][currentCol];
+        return items[targetRow][targetCol];
     }
 
     /**
@@ -173,7 +174,7 @@ public class LevelMap {
                 currentRow+=1;
                 break;
             case 'D':
-                if(currentRow==items[currentRow].length-1){
+                if(currentCol==items[currentRow].length-1){
                     System.err.println("非法移动");
                     Tools.lazy(300L);
                     return;
@@ -184,7 +185,7 @@ public class LevelMap {
         //冒险家新的位置
         items[currentRow][currentCol]=adventurer;
         //原来的位置就不在存在物品了
-        items[oldRow][oldRow]=null;
+        items[oldRow][oldCol]=null;
     }
 
     /**
@@ -194,27 +195,29 @@ public class LevelMap {
         for (int i = 0; i < items.length; i++) {
             String line1 = "", line2 = "";
             for (int j = 0; j < items[0].length; j++) {
+                //冒险家移动后旧位置会留空格，展示时用全角空格占位
+                String info = items[i][j] == null ? "　" : items[i][j].getItemInformation();
                 if (i == 0) {//第一行
                     if (j == 0) {//第一列
                         line1 += "┌───";
-                        line2 += "│ " + items[i][j].getItemInformation() + " ";
+                        line2 += "│ " + info + " ";
                     } else if (j == items[i].length - 1) {//最后一列
                         line1 += "┬───┐";
-                        line2 += "│ " + items[i][j].getItemInformation() + " │";
+                        line2 += "│ " + info + " │";
                     } else {
                         line1 += "┬───";
-                        line2 += "│ " + items[i][j].getItemInformation() + " ";
+                        line2 += "│ " + info + " ";
                     }
                 } else {
                     if (j == 0) {
                         line1 += "├───";
-                        line2 += "│ " + items[i][j].getItemInformation() + " ";
+                        line2 += "│ " + info + " ";
                     } else if (j == items[i].length - 1) {
                         line1 += "┼───┤";
-                        line2 += "│ " + items[i][j].getItemInformation() + " │";
+                        line2 += "│ " + info + " │";
                     } else {
                         line1 += "┼───";
-                        line2 += "│ " + items[i][j].getItemInformation() + " ";
+                        line2 += "│ " + info + " ";
                     }
                 }
             }
@@ -239,8 +242,12 @@ public class LevelMap {
      */
     public void addAdventurer(Adventurer adventurer){
         if(number==1){//第一关
+            currentRow=0;
+            currentCol=0;
             items[0][0]=adventurer;
         }else {
+            currentRow=0;
+            currentCol=1;
             items[0][1]=adventurer;
         }
     }

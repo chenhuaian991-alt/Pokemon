@@ -34,11 +34,11 @@ public class Adventurer implements DisplayItem{
     /**
      * 总背包
      */
-    private Item[][] packageItems={
-            equipments,
-            medicines,
-            pokemons
-    };
+//    private Item[][] packageItems={
+//            equipments,
+//            medicines,
+//            pokemons
+//    };无人读取 做删除处理
 
     /**
      * 探索给定方向地图位置
@@ -131,12 +131,12 @@ public class Adventurer implements DisplayItem{
         System.out.println("发现" +monster.getName() + "，是否清除？ Y/N");
         char clear=Tools.getInputChar();
         if(Character.toUpperCase(clear)=='Y'){
-            for(int i=0;i<pokemons.length;i++){
-                System.out.println((i+1) + "\t" + pokemons[i].getItemInformation());
+            //选择仍有战斗力的宝可梦出战，全队阵亡则触发方案B：复活全队并传送回第一关
+            Pokemon pokemon=selectBattlePokemon();
+            if(pokemon==null){
+                handleAllDefeated();
+                return;
             }
-            System.out.println("请选择出战宠物小精灵：");
-            int number=Tools.getInputNumber(1,pokemons.length);
-            Pokemon pokemon=pokemons[number-1];
             while(monster.getCurrentHealth()>0&&pokemon.getCurrentHealth()>0){
                 //获取宠物小精灵的剩余生命值的比例
                 double rate=pokemon.getHealthPercent();
@@ -158,8 +158,11 @@ public class Adventurer implements DisplayItem{
                                             break;
                                         }
                                     }
-                                    // ② 通过内存拷贝，将 index 后续元素向前平移一位
-                                    System.arraycopy(medicines,index+1,medicines,index,medicines.length-index+1);
+                                    // 找到 index 后，用 copyOf 去掉该元素
+                                    HP[]tmp=new HP[medicines.length-1];
+                                    System.arraycopy(medicines,0,tmp,0,index);
+                                    System.arraycopy(medicines,index+1,tmp,index,medicines.length-1-index);
+                                    medicines=tmp;
                                     System.out.println("药品已经使用完毕");
                                 }else{
                                     int health=hp.use();
@@ -194,6 +197,59 @@ public class Adventurer implements DisplayItem{
 
 
     /**
+     * 选择仍有战斗力的宝可梦出战，自动过滤已阵亡的个体（方案B）
+     * @return 出战的宝可梦，若全队阵亡返回 null
+     */
+    private Pokemon selectBattlePokemon(){
+        //只列出当前生命值大于0的宝可梦
+        int aliveCount=0;
+        for(int i=0;i<pokemons.length;i++){
+            if(pokemons[i].getCurrentHealth()>0){
+                aliveCount++;
+                System.out.println(aliveCount + "\t" + pokemons[i].getItemInformation()
+                        + "（当前生命值=" + pokemons[i].getCurrentHealth() + "/" + pokemons[i].getHealth() + "）");
+            }
+        }
+        if(aliveCount==0){//全队阵亡，交由调用方触发全灭事件
+            return null;
+        }
+        System.out.println("请选择出战宠物小精灵：");
+        int number=Tools.getInputNumber(1,aliveCount);
+        //将列表序号映射回宠物背包中的实际下标
+        int aliveIndex=0;
+        for(int i=0;i<pokemons.length;i++){
+            if(pokemons[i].getCurrentHealth()>0){
+                aliveIndex++;//i=0对应index为1;
+                if(aliveIndex==number){
+                    return pokemons[i];
+                }
+            }
+        }
+        return null;//输入范围已被 getInputNumber 校验，实际不会执行到这里
+    }
+
+    /**
+     * 全灭事件（方案B）：复活所有宝可梦，若不在第一关则沿关卡链传送回第一关
+     */
+    private void handleAllDefeated(){
+        boolean needBack=currentLevel.getPrevLevel()!=null;
+        //全队复活并回满生命值
+        for(int i=0;i<pokemons.length;i++){
+            pokemons[i].setCurrentHealth(pokemons[i].getHealth());
+        }
+        //沿 prevLevel 链回溯至第一关
+        while(currentLevel.getPrevLevel()!=null){
+            currentLevel=currentLevel.getPrevLevel();
+        }
+        if(needBack){
+            System.out.println("所有宠物小精灵均已阵亡，被传送回第一关并全部复活");
+        }else{
+            System.out.println("所有宠物小精灵均已阵亡，已全部复活");
+        }
+        Tools.lazy(300L);
+    }
+
+    /**
      * 获取当前关卡使用的药品，如果当前关卡的药品已经使用完，那么可以使用上一关卡的药品，依次类
      推
      * @param levelNumber
@@ -221,11 +277,17 @@ public class Adventurer implements DisplayItem{
      */
     private void processItem(Item item){
         if(item instanceof HP){
+            boolean merged=false;
             for(HP hp:medicines){
                 if(hp.getLevelNumber()==item.getLevelNumber()){
                     hp.addCount(((HP)item).getCount());
+                    merged=true;
                     break;
                 }
+            }
+            if(!merged){
+                medicines=Arrays.copyOf(medicines,medicines.length+1);
+                medicines[medicines.length-1]=(HP)item;
             }
         } else if (item instanceof Equipment) {
             System.out.println("发现新的装备，是否给宠物小精灵更换？ Y/N");

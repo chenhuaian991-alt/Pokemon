@@ -52,7 +52,7 @@ public abstract class Monster extends Item {
         int restHealth= pokemon.getCurrentHealth()-minusHealth;
         pokemon.setCurrentHealth(restHealth);
 
-        pokemon.setHealth(pokemon.getHealth()-minusHealth);
+//        pokemon.setHealth(pokemon.getHealth()-minusHealth); 这句误删最大生命值
         // 红色输出怪物攻击，输出顺序稳定且不占用错误流
         System.out.println("\033[31m" + name + "对" + pokemon.getName() + "发动攻击,造成了" + minusHealth + "伤害\033[0m");
     }

@@ -91,7 +91,8 @@ public abstract class Pokemon extends Item {
      * @param monster 怪物
      */
     public void attackMonster(Monster monster){
-        int minusHealth=this.attack*this.attack/ monster.getDefense();
+//        int minusHealth=this.attack*this.attack/ monster.getDefense();this.attack不包括装备攻击
+        int minusHealth=getAttack()*getAttack()/ monster.getDefense();
         if(minusHealth==0){
             minusHealth=1;
         }else if(minusHealth>=monster.getCurrentHealth()){
