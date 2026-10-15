@@ -43,6 +43,7 @@ public class HP extends Item {
 
     @Override
     public String getItemInformation() {
-        return "■";
+        //药品不放进地图格子渲染，此信息只用于开箱/掉落文案，返回名称x数量
+        return name + "x" + count;
     }
 }

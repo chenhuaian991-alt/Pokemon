@@ -195,8 +195,8 @@ public class LevelMap {
         for (int i = 0; i < items.length; i++) {
             String line1 = "", line2 = "";
             for (int j = 0; j < items[0].length; j++) {
-                //冒险家移动后旧位置会留空格，展示时用全角空格占位
-                String info = items[i][j] == null ? "　" : items[i][j].getItemInformation();
+                //冒险家移动后旧位置会留空格，展示时用半角空格占位（适配IDEA控制台窄字符渲染）
+                String info = items[i][j] == null ? " " : items[i][j].getItemInformation();
                 if (i == 0) {//第一行
                     if (j == 0) {//第一列
                         line1 += "┌───";

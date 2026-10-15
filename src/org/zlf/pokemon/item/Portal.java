@@ -20,7 +20,8 @@ public class Portal extends Item {
     @Override
     public String getItemInformation() {
         if(discover){
-            return next?"->":"<-";//一个下一关 一个上一关
+            //单字符箭头，避免 "->" 两字符宽破坏地图行对齐
+            return next?"→":"←";//一个下一关 一个上一关
         }
         return "■";
     }

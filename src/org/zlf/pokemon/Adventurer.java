@@ -304,7 +304,20 @@ public class Adventurer implements DisplayItem{
                 if(current!=null){
                     equipments= Arrays.copyOf(equipments,equipments.length+1);
                     equipments[equipments.length-1]=current;
+                    //current 仍是新装备本身，说明没有宝可梦穿上它
+                    if(current==item){
+                        System.out.println("没有宝可梦能穿戴" + item.getItemInformation() + "，已放入背包");
+                    }else{
+                        System.out.println("更换完成，换下的" + current.getItemInformation() + " 已放入背包");
+                    }
+                }else{
+                    System.out.println(item.getItemInformation() + " 穿戴成功");
                 }
+            }else{
+                //不更换也不能让装备凭空消失，放入背包
+                equipments=Arrays.copyOf(equipments,equipments.length+1);
+                equipments[equipments.length-1]=(Equipment) item;
+                System.out.println(item.getItemInformation() + " 已放入背包");
             }
         }else{//宠物小精灵
             int index=-1;
