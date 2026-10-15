@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ClaudeCodeTabState">
+    <option name="tabSessions">
+      <map>
+        <entry key="0">
+          <value>
+            <TabSessionState>
+              <option name="projectPath" value="E:\Java-demo\Pokemon" />
+              <option name="provider" value="claude" />
+              <option name="sessionId" value="4e03a213-62cc-4244-a6bc-af20c7f2c4dc" />
+              <option name="cwd" value="E:\Java-demo\Pokemon" />
+              <option name="model" value="claude-fable-5-1[1m]" />
+              <option name="permissionMode" value="auto" />
+            </TabSessionState>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
