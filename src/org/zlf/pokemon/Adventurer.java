@@ -5,7 +5,9 @@ import org.zlf.pokemon.item.Item;
 import org.zlf.pokemon.item.Portal;
 import org.zlf.pokemon.item.Treasure;
 import org.zlf.pokemon.item.equipment.Equipment;
+import org.zlf.pokemon.item.equipment.GodEquipment;
 import org.zlf.pokemon.item.monster.Monster;
+import org.zlf.pokemon.item.pokemon.Bikachu;
 import org.zlf.pokemon.item.pokemon.Bulbasaur;
 import org.zlf.pokemon.item.pokemon.Pokemon;
 import org.zlf.pokemon.level.Level;
@@ -72,12 +74,15 @@ public class Adventurer implements DisplayItem{
         map.addAdventurer(this);
         while(true){
             currentLevel.getMap().show();
-            System.out.println("请选择移动方向：W(上)、A(左)、S(下)、D(右)、E(退出)");
+            System.out.println("请选择移动方向：W(上)、A(左)、S(下)、D(右)、E(退出)、G(GM菜单)");
             char direct= Tools.getInputChar();
+            if(direct=='G'||direct=='g'){//GM菜单（小写g也要接住，否则会被当成方向引发异常）
+                gmMenu();
+                continue;
+            }
             if(direct=='E'){
-                System.out.println("确定要退出吗？ Y/N");
-                char quit= Tools.getInputChar();
-                if(Character.toUpperCase(quit)=='Y'){
+                char quit=askYN("确定要退出吗？");
+                if(quit=='Y'){
                     System.out.println("感谢使用宠物小精灵闯关");
                     break;
                 }
@@ -93,19 +98,10 @@ public class Adventurer implements DisplayItem{
                 } else if (item instanceof Monster) {
                     processMonster((Monster) item,direct);
                 }else if(item instanceof Portal){
-                    System.out.println("发现传送门，是否通过？ Y/N");
-                    char pass=Tools.getInputChar();
-                    if(Character.toUpperCase(pass)=='Y'){
+                    char pass=askYN("发现传送门，是否通过？");
+                    if(pass=='Y'){
                         if(((Portal)item).isNext()){//通往下一关卡的传送门
-                            Level nextLevel=currentLevel.getNextLevel();
-                            if(nextLevel==null){//下一关卡为空，则需要创建
-                                nextLevel=new Level(currentLevel,currentLevel.getNumber()+1,null);
-                                //将冒险家加载至地图中
-                                nextLevel.getMap().addAdventurer(this);
-                                //当前关卡的下一关卡即为新创建的关卡
-                                currentLevel.setNextLevel(nextLevel);
-                            }
-                            currentLevel=nextLevel;
+                            passNextLevel();
                         }else {//通往上一关卡的传送门
                             Level preLevel=currentLevel.getPrevLevel();
                             if(preLevel==null){
@@ -128,9 +124,8 @@ public class Adventurer implements DisplayItem{
      * @param direct 方向
      */
     private void processMonster(Monster monster,char direct){
-        System.out.println("发现" +monster.getName() + "，是否清除？ Y/N");
-        char clear=Tools.getInputChar();
-        if(Character.toUpperCase(clear)=='Y'){
+        char clear=askYN("发现" + monster.getName() + "，是否清除？");
+        if(clear=='Y'){
             //选择仍有战斗力的宝可梦出战，全队阵亡则触发方案B：复活全队并传送回第一关
             Pokemon pokemon=selectBattlePokemon();
             if(pokemon==null){
@@ -141,9 +136,8 @@ public class Adventurer implements DisplayItem{
                 //获取宠物小精灵的剩余生命值的比例
                 double rate=pokemon.getHealthPercent();
                 if(rate<0.5){//生命值低于50%，询问是否使用药品
-                    System.out.println(pokemon.getName() + "生命值低于50%，是否使用 药品？ Y/N");
-                        char eatHp=Tools.getInputChar();
-                        if(Character.toUpperCase(eatHp)=='Y'){
+                        char eatHp=askYN(pokemon.getName() + "生命值低于50%，是否使用药品？");
+                        if(eatHp=='Y'){
                             HP hp=getCurrentLevelHP(currentLevel.getNumber());
                             if(hp==null){
                                 System.out.println("背包中没有可用药品，请探索其他地图");
@@ -250,6 +244,107 @@ public class Adventurer implements DisplayItem{
     }
 
     /**
+     * 带背包查看的Y/N询问：输入B展示背包后可继续选择，Y/N作出决定
+     * @param question 提示语
+     * @return 大写的 'Y' 或 'N'
+     */
+    private char askYN(String question){
+        while(true){
+            System.out.println(question + " Y(是)/N(否)/B(查看背包)");
+            char c=Character.toUpperCase(Tools.getInputChar());
+            if(c=='B'){
+                showPackage();
+            }else{
+                return c;
+            }
+        }
+    }
+
+    /**
+     * 简单列举背包内容（只读展示，不做任何操作）
+     */
+    private void showPackage(){
+        System.out.println("===== 背包 =====");
+        System.out.println("[装备] 共" + equipments.length + "件");
+        for(int i=0;i<equipments.length;i++){
+            System.out.println(" " + (i+1) + ". " + equipments[i].getItemInformation());
+        }
+        System.out.println("[药品] 共" + medicines.length + "种");
+        for(int i=0;i<medicines.length;i++){
+            System.out.println(" " + (i+1) + ". " + medicines[i].getItemInformation());
+        }
+        System.out.println("[宠物] 共" + pokemons.length + "只");
+        for(int i=0;i<pokemons.length;i++){
+            System.out.println(" " + (i+1) + ". " + pokemons[i].getItemInformation()
+                    + "（当前生命值=" + pokemons[i].getCurrentHealth() + "/" + pokemons[i].getHealth() + "）");
+        }
+        System.out.println("================");
+    }
+
+    /**
+     * 前往下一关：下一关不存在则创建并加载冒险家（传送门与GM菜单共用）
+     */
+    private void passNextLevel(){
+        Level nextLevel=currentLevel.getNextLevel();
+        if(nextLevel==null){//下一关卡为空，则需要创建
+            nextLevel=new Level(currentLevel,currentLevel.getNumber()+1,null);
+            //将冒险家加载至地图中
+            nextLevel.getMap().addAdventurer(this);
+            //当前关卡的下一关卡即为新创建的关卡
+            currentLevel.setNextLevel(nextLevel);
+        }
+        currentLevel=nextLevel;
+    }
+
+    /**
+     * GM调试菜单（常开）：地图查看与物品发放，不影响正常玩法流程
+     */
+    private void gmMenu(){
+        while(true){
+            System.out.println("===== GM 菜单 =====");
+            System.out.println("1.揭开当前关卡全图");
+            System.out.println("2.传送到下一关");
+            System.out.println("3.发放皮卡丘");
+            System.out.println("4.发放神装(8件满属性直接穿戴)");
+            System.out.println("5.全队回满血");
+            System.out.println("0.返回游戏");
+            int choice=Tools.getInputNumber(0,5);
+            switch(choice){
+                case 0:
+                    return;
+                case 1:
+                    currentLevel.getMap().discoverAll();
+                    System.out.println("已揭开当前关卡全图");
+                    break;
+                case 2:
+                    passNextLevel();
+                    System.out.println("已传送到第" + currentLevel.getNumber() + "关");
+                    break;
+                case 3:
+                    pokemons=Arrays.copyOf(pokemons,pokemons.length+1);
+                    pokemons[pokemons.length-1]=new Bikachu();
+                    System.out.println("已发放皮卡丘");
+                    break;
+                case 4:
+                    //每只宝可梦各穿一套独立实例
+                    for(Pokemon pokemon:pokemons){
+                        for(Equipment equipment:GodEquipment.fullSet()){
+                            pokemon.changeEquipment(equipment);
+                        }
+                    }
+                    System.out.println("已为每只宝可梦穿戴8件神装");
+                    break;
+                case 5:
+                    for(int i=0;i<pokemons.length;i++){
+                        pokemons[i].setCurrentHealth(pokemons[i].getHealth());
+                    }
+                    System.out.println("全队已回满血");
+                    break;
+            }
+        }
+    }
+
+    /**
      * 获取当前关卡使用的药品，如果当前关卡的药品已经使用完，那么可以使用上一关卡的药品，依次类
      推
      * @param levelNumber
@@ -290,9 +385,8 @@ public class Adventurer implements DisplayItem{
                 medicines[medicines.length-1]=(HP)item;
             }
         } else if (item instanceof Equipment) {
-            System.out.println("发现新的装备，是否给宠物小精灵更换？ Y/N");
-            char change=Tools.getInputChar();
-            if(Character.toUpperCase(change)=='Y'){
+            char change=askYN("发现新的装备，是否给宠物小精灵更换？");
+            if(change=='Y'){
                 Equipment current=(Equipment) item;
                 for(Pokemon pokemon:pokemons){
                     // 当前宝可梦尝试穿戴 current，并将淘汰下来的旧装备重新赋给 current
@@ -331,9 +425,8 @@ public class Adventurer implements DisplayItem{
                 pokemons=Arrays.copyOf(pokemons,pokemons.length+1);
                 pokemons[pokemons.length-1]=(Pokemon) item;
             }else{//存在同类型宠物小精灵
-                System.out.println("发现可融合宠物小精灵，是否融合？ Y/N");
-                char merge=Tools.getInputChar();
-                if(Character.toUpperCase(merge)=='Y'){
+                char merge=askYN("发现可融合宠物小精灵，是否融合？");
+                if(merge=='Y'){
                     pokemons[index].merge((Pokemon) item);
                 }else{
                     pokemons=Arrays.copyOf(pokemons,pokemons.length+1);
@@ -348,9 +441,8 @@ public class Adventurer implements DisplayItem{
      * @param treasure 宝箱
      */
     private void processTreasure(Treasure treasure,char direct){
-        System.out.println("发现宝箱，是否打开？ Y/N");
-        char open = Tools.getInputChar();
-        if(Character.toUpperCase(open)=='Y'){
+        char open=askYN("发现宝箱，是否打开？");
+        if(open=='Y'){
             //开启宝箱获得一个物品
             Item item=treasure.open();
             //展示获取的物品信息

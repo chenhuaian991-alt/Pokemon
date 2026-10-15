@@ -2,6 +2,7 @@ package org.zlf.pokemon.level;
 
 import org.zlf.pokemon.Adventurer;
 import org.zlf.pokemon.DisplayItem;
+import org.zlf.pokemon.item.Item;
 import org.zlf.pokemon.item.Portal;
 import org.zlf.pokemon.item.Treasure;
 import org.zlf.pokemon.item.monster.*;
@@ -236,6 +237,19 @@ public class LevelMap {
         }
         System.out.println(lastLine);
     }
+    /**
+     * 揭开全图：把地图上所有物品设为已探索（GM调试用）
+     */
+    public void discoverAll(){
+        for(int i=0;i<items.length;i++){
+            for(int j=0;j<items[0].length;j++){
+                if(items[i][j] instanceof Item){
+                    ((Item)items[i][j]).setDiscover(true);
+                }
+            }
+        }
+    }
+
     /**
      * 添加冒险家
      * @param adventurer 冒险家
